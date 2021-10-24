@@ -1,0 +1,62 @@
+on: [push, repository_dispatch]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        haxe-version: [4.2.2]
+        target: [linux, windows, mac]
+        exclude:
+          - os: ubuntu-latest
+            target: windows
+          - os: ubuntu-latest
+            target: mac
+          - os: windows-latest
+            target: linux
+          - os: windows-latest
+            target: mac
+          - os: macos-latest
+            target: linux
+          - os: macos-latest
+            target: windows
+    steps:
+      - name: Fetch sources
+        uses: actions/checkout@v2
+      - name: Setup Haxe (${{ matrix.target }}, haxe ${{ matrix.haxe-version }}, ${{ matrix.os }})
+        uses: krdlab/setup-haxe@v1
+        with:
+          haxe-version: ${{ matrix.haxe-version }}
+
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-haxe
+        with:
+          path: ~/haxelib
+          key: ${{ runner.os }}-build-${{ env.cache-name }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}
+
+      - name: Setup app (${{ matrix.target }}, haxe ${{ matrix.haxe-version }}, ${{ matrix.os }})
+        run: |
+          haxelib install lime --always --quiet
+          haxelib install openfl --always --quiet
+          haxelib install flixel --always --quiet
+          haxelib install flixel-tools
+          haxelib install flixel-addons
+          haxelib install flixel-ui
+          haxelib install hscript
+          haxelib install newgrounds
+          haxelib git linc_luajit https://github.com/nebulazorua/linc_luajit.git
+          haxelib git hxvm-luajit https://github.com/nebulazorua/hxvm-luajit
+          haxelib git faxe https://github.com/uhrobots/faxe
+          haxelib git polymod https://github.com/larsiusprime/polymod.git
+          haxelib git discord_rpc https://github.com/Aidan63/linc_discord-rpc
+          haxelib install actuate
+          haxelib git extension-webm https://github.com/KadeDev/extension-webm
+      - name: Build app (${{ matrix.target }}, haxe ${{ matrix.haxe-version }}, ${{ matrix.os }})
+        run: |
+          haxelib run lime build ${{ matrix.target }}
