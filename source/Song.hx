@@ -15,6 +15,7 @@ using StringTools;
 typedef SwagSong =
 {
 	var song:String;
+	var songKeys:Null<Int>;
 	var notes:Array<SwagSection>;
 	var bpm:Float;
 	var needsVoices:Bool;
@@ -104,6 +105,7 @@ class Song
 	{
 		var swagShit:SwagSong = cast Json.parse(rawJson).song;
 		swagShit.validScore = true;
+		if(swagShit.songKeys == null) swagShit.songKeys = 4;
 		return swagShit;
 	}
 }

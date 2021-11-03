@@ -3,6 +3,7 @@ package;
 #if desktop
 import Discord.DiscordClient;
 #end
+import flixel.input.keyboard.FlxKey;
 import flash.text.TextField;
 import flixel.FlxG;
 import flixel.FlxSprite;
@@ -24,6 +25,7 @@ import flixel.util.FlxTimer;
 import flixel.input.keyboard.FlxKey;
 import flixel.graphics.FlxGraphic;
 import Controls;
+import Note;
 
 using StringTools;
 
@@ -151,21 +153,13 @@ class NotesSubstate extends MusicBeatSubstate
 			for (j in 0...3) {
 				var optionText:Alphabet = new Alphabet(0, yPos, Std.string(ClientPrefs.arrowHSV[i][j]));
 				optionText.x = posX + (225 * j) + 100 - ((optionText.lettersArray.length * 90) / 2);
+				optionText.targetY = i;
 				grpNumbers.add(optionText);
 			}
 
 			var note:FlxSprite = new FlxSprite(posX - 70, yPos);
 			note.frames = Paths.getSparrowAtlas('NOTE_assets');
-			switch(i) {
-				case 0:
-					note.animation.addByPrefix('idle', 'purple0');
-				case 1:
-					note.animation.addByPrefix('idle', 'blue0');
-				case 2:
-					note.animation.addByPrefix('idle', 'green0');
-				case 3:
-					note.animation.addByPrefix('idle', 'red0');
-			}
+			note.animation.addByPrefix('idle', NoteGraphic.fromIndexWithoutConvert(i) + '0');
 			note.animation.play('idle');
 			note.antialiasing = ClientPrefs.globalAntialiasing;
 			grpNotes.add(note);
@@ -235,7 +229,7 @@ class NotesSubstate extends MusicBeatSubstate
 				FlxG.sound.play(Paths.sound('scrollMenu'));
 			}
 			if(controls.RESET) {
-				for (i in 0...3) {
+				for (i in 0...8) {
 					resetValue(curSelected, i);
 				}
 				FlxG.sound.play(Paths.sound('scrollMenu'));
@@ -316,16 +310,24 @@ class NotesSubstate extends MusicBeatSubstate
 		curValue = ClientPrefs.arrowHSV[curSelected][typeSelected];
 		updateValue();
 
+		var bullShit:Int = 0;
+
 		for (i in 0...grpNumbers.length) {
 			var item = grpNumbers.members[i];
+			if(i % 3 == 0 && i != 0) bullShit++;
+			item.y = (165 * (bullShit - (curSelected))) + 35;
 			item.alpha = 0.6;
 			if ((curSelected * 3) + typeSelected == i) {
 				item.alpha = 1;
 			}
 		}
+
+		bullShit = 0;
 		for (i in 0...grpNotes.length) {
 			var item = grpNotes.members[i];
 			item.alpha = 0.6;
+			item.setPosition(posX - 70, (165 * (bullShit - curSelected)) + 35);
+			bullShit++;
 			item.scale.set(1, 1);
 			if (curSelected == i) {
 				item.alpha = 1;
@@ -401,27 +403,47 @@ class ControlsSubstate extends MusicBeatSubstate {
 
 	var optionShit:Array<Dynamic> = [
 		['NOTES'],
-		['Left', 'note_left'],
-		['Down', 'note_down'],
-		['Up', 'note_up'],
-		['Right', 'note_right'],
+		['4k 5k'],
+		['Left', Control.NOTE_LEFT],
+		['Down', Control.NOTE_DOWN],
+		['Center', Control.NOTE_CENTER_5k],
+		['Up', Control.NOTE_UP],
+		['Right', Control.NOTE_RIGHT],
+		['6k 7k'],
+		['Left', Control.NOTE_1_6k],
+		['Down', Control.NOTE_2_6k],
+		['Right', Control.NOTE_3_6k],
+		['Center', Control.NOTE_CENTER_7k],
+		['Left', Control.NOTE_4_6k],
+		['Up', Control.NOTE_5_6k],
+		['Right', Control.NOTE_6_6k],
+		['8k 9k'],
+		['Left', Control.NOTE_1_8k],
+		['Down', Control.NOTE_2_8k],
+		['Up', Control.NOTE_3_8k],
+		['Right', Control.NOTE_4_8k],
+		['Center', Control.NOTE_CENTER_9k],
+		['Left', Control.NOTE_5_8k],
+		['Down', Control.NOTE_6_8k],
+		['Up', Control.NOTE_7_8k],
+		['Right', Control.NOTE_8_8k],
 		[''],
 		['UI'],
-		['Left', 'ui_left'],
-		['Down', 'ui_down'],
-		['Up', 'ui_up'],
-		['Right', 'ui_right'],
+		['Left', Control.UI_LEFT],
+		['Down', Control.UI_DOWN],
+		['Up', Control.UI_UP],
+		['Right', Control.UI_RIGHT],
 		[''],
-		['Reset', 'reset'],
-		['Accept', 'accept'],
-		['Back', 'back'],
-		['Pause', 'pause'],
+		['Reset', Control.RESET],
+		['Accept', Control.ACCEPT],
+		['Back', Control.BACK],
+		['Pause', Control.PAUSE],
 	];
 
 	private var grpOptions:FlxTypedGroup<Alphabet>;
 	private var grpInputs:Array<AttachedText> = [];
 	private var grpInputsAlt:Array<AttachedText> = [];
-	private var controlMap:Map<String, Dynamic>;
+	private var controlMap:Map<Control, Dynamic>;
 	var rebindingKey:Bool = false;
 	var nextAccept:Int = 5;
 
